@@ -38,6 +38,7 @@
 #define GIANTROBOT_SND_DEPLOYING	"mvm/mvm_deploy_giant.wav"
 #define SMALLROBOT_SND_DEPLOYING	"mvm/mvm_deploy_small.wav"
 #define BOMB_SND_STAGEALERT			"mvm/mvm_warning.wav"
+
 //spy laugh
 #define SPYLAUGH1					"vo/mvm/norm/spy_mvm_laughshort02.mp3"
 #define SPYLAUGH2					"vo/mvm/norm/spy_mvm_laughshort03.mp3"
@@ -982,6 +983,7 @@ public OnClientPutInServer( iClient )
 }
 public OnClientDisconnect( iClient )
 {
+	BtouchedUpgradestation[iClient] = false;
 	ResetData( iClient, true );
 	DestroyBuildings( iClient );
 	FixSounds( iClient );
