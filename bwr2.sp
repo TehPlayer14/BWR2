@@ -7645,6 +7645,7 @@ public Action:Timer_SetNoUpgrade( Handle:hTimer, any:iEntity )
 }
 public TF2_OnWaitingForPlayersStart()
 {
+	flNextChangeTeamBlu = GetGameTime() + 5.2;
 	if(nGateCapture != 0)
 		nGateCapture = 0;
 	if(GateStunEnabled)
