@@ -1191,7 +1191,7 @@ public Action:Command_JoinTeam( iClient, const String:strCommand[], nArgs )
 			PrintToChat( iClient, "You've used upgrade station! You can't join robots!" );
 			return Plugin_Handled;
 		}
-		if(flNextChangeTeamBlu - GetGameTime() > -0.1)
+		if(GetGameTime() - flNextChangeTeamBlu < 0.1)
 		{
 			return Plugin_Handled;
 		}
