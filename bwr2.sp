@@ -14,7 +14,7 @@
 
 #pragma semicolon					1
 
-#define PLUGIN_VERSION				"BWR2 1.5.3"
+#define PLUGIN_VERSION				"BWR2 1.5.4"
 #define PLUGIN_TAG					"BWR2"
 
 //#define PLUGIN_UPDATE_URL			""
@@ -68,7 +68,6 @@
 //new bool:JoinTeamCoolDown = true;
 new Float:flNextChangeTeamBlu;
 new BtouchedUpgradestation[MAXPLAYERS];
-
 
 //Sentrybusterpickingbools
 new bool:g_CanDispatchSentryBuster = false;
@@ -267,10 +266,11 @@ new nMaxEngineers;
 public Plugin:myinfo = 
 {
 	name = "[TF2] Be With Robots 2",
-	author = "TehPlayer14, Benoist3012",
+	author = "TehPlayer14", 
 	description = "Allows players to play as robot on MvM mode.",
 	version = PLUGIN_VERSION,
 	url = "http://www.sourcemod.net"
+	//Old BWR2 Benoist3012
 	//Orginal(Leonardo)
 }
 
@@ -584,6 +584,7 @@ public OnMapStart()
 		while( ( iEnt = FindEntityByClassname( iEnt, "func_respawnroom") ) != -1 )
 			if( GetEntProp( iEnt, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
 			{
+				//SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
 				SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
 				SDKHook( iEnt, SDKHook_EndTouch, OnSpawnEndTouch );
 			}
@@ -644,17 +645,17 @@ public OnMapStart()
 			Format(strAnnounceLine, sizeof(strAnnounceLine), "vo/announcer_mvm_engbot_arrive0%i.mp3", a);
 			PrecacheSnd(strAnnounceLine, _, true );
 		}
-		/////////////////STEP
-		for(new a = 1; a <= 18; a++)
-		{
-			Format( strAnnounceLine, sizeof( strAnnounceLine ), "mvm/player/footsteps/robostep_%s%i.wav", ( a < 10 ? "0" : "" ), a );
-			PrecacheSound(strAnnounceLine);
-		}
-		for(new a = 1; a <= 18; a++)
-		{
-			Format( strAnnounceLine, sizeof( strAnnounceLine ), "mvm/giant_common/giant_common_step_%s%i.wav", ( a < 10 ? "0" : "" ), a );
-			PrecacheSound(strAnnounceLine);
-		}
+		/////////////////STEP unused
+		//for(new a = 1; a <= 18; a++)
+		//{
+		//	Format( strAnnounceLine, sizeof( strAnnounceLine ), "mvm/player/footsteps/robostep_%s%i.wav", ( a < 10 ? "0" : "" ), a );
+		//	PrecacheSound(strAnnounceLine);
+		//}
+		//for(new a = 1; a <= 18; a++)
+		//{
+		//	Format( strAnnounceLine, sizeof( strAnnounceLine ), "mvm/giant_common/giant_common_step_%s%i.wav", ( a < 10 ? "0" : "" ), a );
+		//	PrecacheSound(strAnnounceLine);
+		//} unused
 		for(new a = 1; a <= 12; a++)
 		{
 			Format( strAnnounceLine, sizeof( strAnnounceLine ), "vo/mvm_wave_lose%s%i.mp3", ( a < 10 ? "0" : "" ), a );
@@ -804,7 +805,7 @@ public OnGameFrame()
 				continue;
 			
 			// blue/yellow eyes
-			SetEntProp( i, Prop_Send, "m_nBotSkill", BotSkill_Easy );
+			//SetEntProp( i, Prop_Send, "m_nBotSkill", BotSkill_Easy );
 			SetEntProp( i, Prop_Send, "m_bIsMiniBoss", _:false );
 			if( nTeamNum == _:TFTeam_Blue )
 			{
@@ -818,8 +819,8 @@ public OnGameFrame()
 					TF2_AddCondition(i, TFCond_UberchargeFading, 1.0);
 				}
 					
-				else if( iRobotMode[i] == Robot_Stock )
-					SetEntProp( i, Prop_Send, "m_nBotSkill", BotSkill_Expert );
+				//else if( iRobotMode[i] == Robot_Stock )
+				//	SetEntProp( i, Prop_Send, "m_nBotSkill", BotSkill_Expert );
 			}
 			if( nTeamNum != _:TFTeam_Blue )
 			{
@@ -1014,8 +1015,12 @@ public OnEntityCreated( iEntity, const String:strClassname[] )
 	}
 	else if( StrEqual( strClassname, "func_respawnroom", false ) )
 	{
-		SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
-		SDKHook( iEntity, SDKHook_EndTouch, OnSpawnEndTouch );
+		if( GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
+		{
+		//SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
+			SDKHook( iEntity, SDKHook_Touch, OnSpawnStartTouch );
+			SDKHook( iEntity, SDKHook_EndTouch, OnSpawnEndTouch );
+		}
 	}
 	else if( StrEqual( strClassname, "func_capturezone", false ) )
 	{
@@ -1147,7 +1152,7 @@ public Action:Command_JoinTeam( iClient, const String:strCommand[], nArgs )
 	new bool:bACanJoinRED = CheckCommandAccess( iClient, "tf2bwr_joinred", 0, true );
 	new bool:bACanJoinBLU = CheckCommandAccess( iClient, "tf2bwr_joinblue", 0, true );
 	new bool:bCanJoinRED = ( iMaxDefenders <= 0 || iNumDefenders < iMaxDefenders ) && bACanJoinRED;
-	new bool:bEnoughRED = ( iMinDefenders <= 0 || iNumDefenders >= iMinDefenders );
+	new bool:bEnoughRED = ( iMinDefenders <= 0 || iNumDefenders >= iMinDefenders );//iNumDefenders >= iMinDefenders
 	new bool:bCanJoinBLU = ( bEnoughRED && ( iMaxDefenders <= 0 || iNumHumanRobots < ( TF_MVM_MAX_PLAYERS - iMaxDefenders ) ) ) && bACanJoinBLU;
 	
 	if( iTeam == TFTeam_Red && !bACanJoinRED )
@@ -1249,25 +1254,26 @@ public Action:Command_JoinClass( iClient, const String:strCommand[], nArgs )
 	if( !IsMvM() || !IsValidRobot(iClient) )
 		return Plugin_Continue;
 	
-	if( !bInRespawn[iClient] && IsPlayerAlive(iClient) )
+	if( IsPlayerAlive(iClient) && !bInRespawn[iClient] )
 		KillPlayer2(iClient);
-		//ForcePlayerSuicide( iClient );
-	
-	if( GameRules_GetRoundState() != RoundState_BetweenRounds )
-	{
-		ShowClassMenu( iClient );
-		return Plugin_Handled;
-	}
-	
-	ResetData( iClient );
 	
 	decl String:strClass[16];
 	if( nArgs > 0 )
 		GetCmdArg( 1, strClass, sizeof(strClass) );
-	
+		
 	if( strlen(strClass) <= 0 )
 		return Plugin_Handled;
 	
+	
+	if( GameRules_GetRoundState() != RoundState_BetweenRounds )
+	{
+		ShowClassMenu( iClient );
+		if( !StrEqual( strClass, "sniper", false ) )
+			return Plugin_Handled;
+	}
+	
+	ResetData( iClient );
+
 	if( StrEqual( strClass, "auto", false ) || StrEqual( strClass, "engineer", false ) && !CanPlayEngineer(iClient) )
 	{
 		decl String:strClasses[9][16] = { "scout","sniper","soldier","demoman","medic","heavyweapons","pyro","spy","engineer" };
@@ -1424,7 +1430,7 @@ public Action:Command_Listener( iClient, const String:strCmdName[], nArgs )
 }
 public Action:Command_ChangeClassMenu( iClient, nArgs )
 {
-	if( !IsMvM() || !IsValidRobot(iClient) )
+	if( !IsMvM() || !IsValidRobot(iClient) || GameRules_GetRoundState() == RoundState_TeamWin)
 		return Plugin_Continue;
 	
 	if( !bRandomizer && ( bInRespawn[iClient] || !IsPlayerAlive(iClient) ) && GameRules_GetRoundState() == RoundState_BetweenRounds )
@@ -1465,7 +1471,15 @@ public Action:Command_JoinTeamBlue( iClient, nArgs )
 	if( !IsMvM() || !IsValidClient(iClient) || IsFakeClient(iClient) )
 		return Plugin_Continue;
 	
+	//if( 5 > (TF_MVM_MAX_PLAYERS - iMaxDefenders) && !IsFakeClient(iClient))
+	if( GetTeamPlayerCount( _:TFTeam_Blue ) > (TF_MVM_MAX_PLAYERS - iMaxDefenders) && !IsFakeClient(iClient))
+	{
+		FakeClientCommand( iClient, "jointeam red" );
+		return Plugin_Handled;
+	}
+	
 	FakeClientCommand( iClient, "jointeam blue" );
+	
 	return Plugin_Handled;
 }
 public Action:Command_JoinTeamRed( iClient, nArgs )
@@ -1815,7 +1829,7 @@ public Action:Timer_OnPlayerSpawn( Handle:hTimer, any:iUserID )
 		g_CanDispatchSentryBuster = false;
 		if( ( flLastAnnounce + 10.0 ) < GetEngineTime() && GameRules_GetRoundState() == RoundState_RoundRunning )
 		{
-			if( ( flLastSentryBuster + 180.0 ) > GetEngineTime() ) switch( GetRandomInt(0,1) )
+			if( ( flLastSentryBuster + 50.0 ) > GetEngineTime() ) switch( GetRandomInt(0,1) )
 			{
 				case 1: Format( strAnnounceLine, sizeof(strAnnounceLine), "vo/mvm_sentry_buster_alerts02.mp3" );
 				default: Format( strAnnounceLine, sizeof(strAnnounceLine), "vo/mvm_sentry_buster_alerts03.mp3" );
@@ -1828,7 +1842,7 @@ public Action:Timer_OnPlayerSpawn( Handle:hTimer, any:iUserID )
 				case 1: Format( strAnnounceLine, sizeof(strAnnounceLine), "vo/mvm_sentry_buster_alerts04.mp3" );
 				default: Format( strAnnounceLine, sizeof(strAnnounceLine), "vo/mvm_sentry_buster_alerts01.mp3" );
 			}
-			flLastSentryBuster = GetEngineTime();
+			//flLastSentryBuster = GetEngineTime();
 			flLastAnnounce = GetEngineTime();
 			EmitSoundToClients( strAnnounceLine );
 		}
@@ -2135,8 +2149,10 @@ public Action:Timer_OnPlayerDeath( Handle:hTimer, any:iUserID )
 	
 	if( IsValidRobot(iClient) )
 	{
-		if( iDeployingBomb == iClient )
+		TF2Attrib_RemoveByName(iClient, "health regen");
+		if( iDeployingBomb > 0 )
 		{
+			KillDeployAnimation3();
 			iDeployingBomb = -1;
 			if (g_hDeployTimer != INVALID_HANDLE)
 			{
@@ -2327,7 +2343,7 @@ public OnPlayerChangeTeam( Handle:hEvent, const String:strEventName[], bool:bDon
 		return;
 	
 	if( GetEventInt( hEvent, "team" ) == _:TFTeam_Blue )
-		flNextChangeTeamBlu = GetGameTime() + 2.2;
+		flNextChangeTeamBlu = GetGameTime() + 1.2;
 	
 	flNextChangeTeam[iClient] = GetGameTime() + 3.0;
 	
@@ -2393,7 +2409,7 @@ public Action:OnPlayerSpawnPre( Handle:hEvent, const String:strEventName[], bool
 	}
 	CreateTimer( 0.1, Timer_SetRobotModel, iClient, TIMER_REPEAT|TIMER_FLAG_NO_MAPCHANGE );
 //	if( GameRules_GetRoundState() == RoundState_BetweenRounds && !bInRespawn[iClient] && GetClientTeam(iClient) == _:TFTeam_Blue )
-//		TeleportToSpawnArea(iClient);
+//		CreateExtraSpawnAreas(iClient);
 //	new iTeamNum = GetClientTeam(iClient);
 //	if( iTeamNum == _:TFTeam_Blue )
 //	{
@@ -2434,8 +2450,8 @@ public OnPlayerSpawn( Handle:hEvent, const String:strEventName[], bool:bDontBroa
 	{
 		decl String:strVariant[128];
 		if( iRobotVariant[iClient] == -1 )
-			PrintToChat( iClient, "\x01You're spawned as \x03Your spy\x01");	//PrintToChat( iClient, "\x01You're spawned as \x03You are\x01", strVariant );
-		if( iRobotVariant[iClient] == -1 && IsGateBotPlayer[iClient])
+			PrintToChat( iClient, "\x01You're spawned as \x03Your Spy\x01");	//PrintToChat( iClient, "\x01You're spawned as \x03You are\x01", strVariant );
+		else if( iRobotVariant[iClient] == -1 && IsGateBotPlayer[iClient])
 			PrintToChat( iClient, "\x01You're spawned as \x03Your GateBot Spyx\01" );	//PrintToChat( iClient, "\x01You're spawned as \x03You are\x01", strVariant );
 		else if( GetRobotVariantName( iClass, iRobotVariant[iClient], strVariant, sizeof(strVariant) ) && !IsGateBotPlayer[iClient])
 			PrintToChat( iClient, "\x01You're spawned as \x03%s\x01", strVariant );
@@ -2597,10 +2613,10 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 		bSkipInvAppEvent[iClient] = false;
 		return;
 	}
-	if( !bInRespawn[iClient] && IsPlayerAlive(iClient) && GameRules_GetRoundState() == RoundState_BetweenRounds && GetClientTeam(iClient) == _:TFTeam_Blue )
-	{
-		TeleportToSpawnArea(iClient);
-	}
+	//if( !bInRespawn[iClient] && IsPlayerAlive(iClient) && GameRules_GetRoundState() == RoundState_BetweenRounds && GetClientTeam(iClient) == _:TFTeam_Blue )
+	//{
+	//	CreateExtraSpawnAreas(iClient);
+	//}
 	if( GetClientTeam(iClient) != _:TFTeam_Blue )
 	{
 		if( bStripItems[iClient] )
@@ -2635,35 +2651,35 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 				{
 					Format(weaponAttribs, sizeof(weaponAttribs), "115 ; 1"); //incrases dmg when low health
 					SpawnWeapon( iClient, "tf_weapon_scattergun", 13, 100, 5, weaponAttribs, false );	
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 1475 ; 252 ; 0.7 ; 329 ; 0.7 ; 330 ; 5");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 1475 ; 252 ; 0.7 ; 329 ; 0.7 ; 330 ; 5");
 				}
 				SpawnWeapon( iClient, "tf_weapon_bat", 0, 100, 5, weaponAttribs, false );
 			}
 			if( iRobotVariant[iClient] == 3 || iRobotVariant[iClient] == 7 )
 			{
 				if( iRobotVariant[iClient] == 7 )
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 1490 ; 107 ; 2 ; 252 ; 0.7 ; 329 ; 0.7 ; 330 ; 5 ; 278 ; 0.1");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 1490 ; 107 ; 2 ; 252 ; 0.7 ; 329 ; 0.7 ; 330 ; 5 ; 278 ; 0.1");
 				else
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 15");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 15");
 				SpawnWeapon( iClient, "tf_weapon_bat_wood", 44, 100, 5, weaponAttribs, false );
 			}
 			if( iRobotVariant[iClient] == 6 )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 1075 ; 107 ; 2 ; 252 ; 0.7 ; 329 ; 0.7 ; 330 ; 5");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 1075 ; 107 ; 2 ; 252 ; 0.7 ; 329 ; 0.7 ; 330 ; 5");
 				SpawnWeapon( iClient, "tf_weapon_bat_fish", 221, 100, 5, weaponAttribs, false );
 			}
 			Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 			if( iRobotVariant[iClient] == 2 ) //New Knockback Scout
 			{
 				SpawnWeapon( iClient, "tf_weapon_bat", 0, 100, 5, weaponAttribs, false );
-				Format(weaponAttribs, sizeof(weaponAttribs), "522 ; 1 ; 182 ; 2 ; 26 ; 55");
+				Format(weaponAttribs, sizeof(weaponAttribs), "522 ; 1 ; 182 ; 2 ; 140 ; 55");
 				SpawnWeapon( iClient, "tf_weapon_handgun_scout_primary", 220, 100, 5, weaponAttribs, false );
 			}
 			if( iRobotVariant[iClient] == 8 ) //armored FAN Scout added in 1.3.5v dev
 			{
 				Format(weaponAttribs, sizeof(weaponAttribs), "518 ; 6 ; 97 ; 1.7 ; 1 ; 0.35 ; 45 ; 2 ; 106 ; 0.4 ; 54 ; 0.5 ; 252 ; 0.7 ; 329 ; 0.7"); //fixed reload
 				SpawnWeapon( iClient, "tf_weapon_scattergun", 45, 100, 5, weaponAttribs, false );
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 5875 ; 330 ; 5");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 5875 ; 330 ; 5");
 				SpawnWeapon( iClient, "tf_weapon_bat", 0, 100, 5, weaponAttribs, false );
 			}
 			if( iRobotVariant[iClient] == 4 ) //warp assasin old Tornado Scout
@@ -2728,19 +2744,19 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			}
 			if( iRobotVariant[iClient] == 7 )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 3600 ; 107 ; 0.5 ; 318 ; 0.2 ; 103 ; 0.5 ; 6 ; 2 ; 252 ; 0.4 ; 329 ; 0.4 ; 330 ; 3");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 3600 ; 107 ; 0.5 ; 318 ; 0.2 ; 103 ; 0.5 ; 6 ; 2 ; 252 ; 0.4 ; 329 ; 0.4 ; 330 ; 3");
 				SpawnWeapon( iClient, "tf_weapon_rocketlauncher", 513, 100, 5, weaponAttribs, false );
 			}
 			else
 			{
 				if( iRobotVariant[iClient] == 6 )
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 3600 ; 107 ; 0.5 ; 252 ; 0.4 ; 329 ; 0.4 ; 330 ; 3");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 3600 ; 107 ; 0.5 ; 252 ; 0.4 ; 329 ; 0.4 ; 330 ; 3");
 					SpawnWeapon( iClient, "tf_weapon_rocketlauncher", 18, 100, 5, weaponAttribs, false );
 				}
 				else if( iRobotVariant[iClient] == 8 )
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 3600 ; 107 ; 0.5 ; 252 ; 0.4 ; 329 ; 0.4 ; 330 ; 3 ; 6 ; 0.5 ; 318 ; -0.8 ; 103 ; 0.65");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 3600 ; 107 ; 0.5 ; 252 ; 0.4 ; 329 ; 0.4 ; 330 ; 3 ; 6 ; 0.5 ; 318 ; -0.8 ; 103 ; 0.65");
 					SpawnWeapon( iClient, "tf_weapon_rocketlauncher", 18, 100, 5, weaponAttribs, false );
 				}
 			}
@@ -2753,12 +2769,12 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			{
 				if( iRobotVariant[iClient] == 101 )// Major Crits
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "330 ; 3 ; 2 ; 5 ; 103 ; 1 ; 99 ; 2 ; 522 ; 1 ; 318 ; 3 ; 6 ; 2 ; 411 ; 1 ; 521 ; 1 ; 107 ; 0.4 ; 329 ; 0.4 ; 252 ; 0.4 ; 405 ; 0.1 ; 26 ; 39800");
+					Format(weaponAttribs, sizeof(weaponAttribs), "330 ; 3 ; 2 ; 5 ; 103 ; 1 ; 99 ; 2 ; 522 ; 1 ; 318 ; 3 ; 6 ; 2 ; 411 ; 1 ; 521 ; 1 ; 107 ; 0.4 ; 329 ; 0.4 ; 252 ; 0.4 ; 405 ; 0.1 ; 140 ; 39800");
 					SpawnWeapon( iClient, "tf_weapon_rocketlauncher", 228, 100, 5, weaponAttribs, false );
 				}
 				if( iRobotVariant[iClient] == 100 )// Sergeant Crits
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "330 ; 3 ; 2 ; 1.5 ; 26 ; 59800 ; 107 ; 0.3 ; 252 ; 0.4 ; 329 ; 0.4 ; 6 ; 0.2 ; 318 ; 0.6 ; 440 ; 7.0 ; 103 ; 1.3 ; 57 ; 250.0 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 3.0");
+					Format(weaponAttribs, sizeof(weaponAttribs), "330 ; 3 ; 2 ; 1.5 ; 140 ; 59800 ; 107 ; 0.3 ; 252 ; 0.4 ; 329 ; 0.4 ; 6 ; 0.2 ; 318 ; 0.6 ; 440 ; 7.0 ; 103 ; 1.3 ; 57 ; 250.0 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 3.0");
 					SpawnWeapon( iClient, "tf_weapon_rocketlauncher", 18, 100, 5, weaponAttribs, false);
 				}
 			}
@@ -2809,22 +2825,22 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 				
 			if( iRobotVariant[iClient] == 5 )// airblast pyro
 			{
-				//Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6 ; 255 ; 5 ; 256 ; 0.75 ; 2 ; 0.05 ; 6 ; 1");
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6 ; 255 ; 5 ; 522 ; 1 ; 2 ; 0.05 ; 6 ; 1");
+				//Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6 ; 255 ; 5 ; 256 ; 0.75 ; 2 ; 0.05 ; 6 ; 1");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6 ; 255 ; 5 ; 522 ; 1 ; 2 ; 0.05 ; 6 ; 1");
 				SpawnWeapon( iClient, "tf_weapon_flamethrower", 215, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 0 || iRobotVariant[iClient] == 3 )
 			{
 				Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 				if( iRobotVariant[iClient] == 3 )
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6");
 				SpawnWeapon( iClient, "tf_weapon_flamethrower", 21, 100, 5, weaponAttribs, false );
 			}
 			
 			if( iRobotVariant[iClient] == 1 || iRobotVariant[iClient] == 4 )
 			{
 				if( iRobotVariant[iClient] == 4 )
-					Format(weaponAttribs, sizeof(weaponAttribs), "25 ; 0.5 ; 26 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6 ; 6 ; 0.3 ; 103 ; 1");
+					Format(weaponAttribs, sizeof(weaponAttribs), "25 ; 0.5 ; 140 ; 2825 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6 ; 330 ; 6 ; 6 ; 0.3 ; 103 ; 1");
 				else
 					Format(weaponAttribs, sizeof(weaponAttribs), "25 ; 0.5");
 				SpawnWeapon( iClient, "tf_weapon_flaregun", 39, 100, 5, weaponAttribs, false );
@@ -2836,7 +2852,7 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			}
 			else if( iRobotVariant[iClient] == 100 )// Chief Pyro (Boss System)
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 54825 ; 107 ; 0.4 ; 252 ; 0.3 ; 329 ; 0.3 ; 2 ; 5 ; 255 ; 2 ; 57 ; 500 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 6");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 54825 ; 107 ; 0.4 ; 252 ; 0.3 ; 329 ; 0.3 ; 2 ; 5 ; 255 ; 2 ; 57 ; 500 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 6");
 				SpawnWeapon( iClient, "tf_weapon_flamethrower", 208, 100, 5, weaponAttribs, false );
 			}
 			Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
@@ -2858,7 +2874,7 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			}
 			if( iRobotVariant[iClient] == SENTRYBUSTER_CLASSVARIANT )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 2325 ; 107 ; 1.42 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 7 ; 402 ; 1 ; 137 ; 75 ; 396 ; 0.5");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2325 ; 107 ; 1.42 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 7 ; 402 ; 1 ; 137 ; 75 ; 396 ; 0.5");
 				SpawnWeapon( iClient, "tf_weapon_stickbomb", 307, 100, 5, weaponAttribs, false );
 				Format(weaponAttribs, sizeof(weaponAttribs), "692 ; 1");
 				SpawnWeapon( iClient, "tf_wearable", 30161, 100, 5, weaponAttribs, true );
@@ -2869,9 +2885,9 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 				{
 					Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 					if( iRobotVariant[iClient] == 2 )
-						Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 3128 ; 107 ; 0.5 ; 318 ; -0.4 ; 6 ; 0.75 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 4");
+						Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 3128 ; 107 ; 0.5 ; 318 ; -0.4 ; 6 ; 0.75 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 4");
 					else if( iRobotVariant[iClient] == 3 ) // Giant Blast Demoman
-						Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 2825 ; 107 ; 0.5 ; 6 ; 0.5 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 4 ; 522 ; 1 ; 99 ; 0.5 ; 103 ; 2");
+						Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2825 ; 107 ; 0.5 ; 6 ; 0.5 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 4 ; 522 ; 1 ; 99 ; 0.5 ; 103 ; 2");
 					SpawnWeapon( iClient, "tf_weapon_grenadelauncher", 19, 100, 5, weaponAttribs, false );
 					Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 					SpawnWeapon( iClient, "tf_weapon_bottle", 1, 100, 5, weaponAttribs, false );
@@ -2880,36 +2896,36 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 				{
 					Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 					if( iRobotVariant[iClient] == 4 ) //giant demoknight
-						Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 3125 ; 107 ; 0.5 ; 31 ; 6 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 4 ; 180 ; 140");
+						Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 3125 ; 107 ; 0.5 ; 31 ; 6 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 4 ; 180 ; 140");
 					SpawnWeapon( iClient, "tf_weapon_sword", 132, 100, 5, weaponAttribs, false );
-					if( iRobotVariant[iClient] == 4 )
+					if( iRobotVariant[iClient] == 4 || iRobotVariant[iClient] == 1 )
 					{
 						Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 						SpawnWeapon( iClient, "tf_wearable", 405, 100, 5, weaponAttribs, true );
 					}
-					Format(weaponAttribs, sizeof(weaponAttribs), "527 ; 1 ; 60 ; 0.75 ; 64 ; 0.85");
+					Format(weaponAttribs, sizeof(weaponAttribs), "60 ; 0.75 ; 64 ; 0.85"); //removed fireproof 527 ; 1
 					SpawnWeapon( iClient, "tf_wearable_demoshield", 131, 100, 5, weaponAttribs, true );//shield reverted
 				}
 				else if( iRobotVariant[iClient] == 100 ) //Major Bomber (Boss System)
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 39825 ; 107 ; 0.32 ; 252 ; 0.7 ; 329 ; 0.3 ; 3 ; 3 ; 103 ; 1.5 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 4");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 39825 ; 107 ; 0.32 ; 252 ; 0.7 ; 329 ; 0.3 ; 3 ; 3 ; 103 ; 1.5 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 4");
 					SpawnWeapon( iClient, "tf_weapon_grenadelauncher", 206, 100, 5, weaponAttribs, false );
 				}
 				else if( iRobotVariant[iClient] == 101 ) //Chief Tavish (Boss System)
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 54850 ; 107 ; 0.4 ; 252 ; 0.3 ; 329 ; 0.3 ; 57 ; 500 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 4");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 54850 ; 107 ; 0.4 ; 252 ; 0.3 ; 329 ; 0.3 ; 57 ; 500 ; 478 ; 0.1 ; 405 ; 0.1 ; 330 ; 4");
 					SpawnWeapon( iClient, "tf_weapon_sword", 132, 100, 5, weaponAttribs, false );
 				}
 				else if( iRobotVariant[iClient] == 102 ) //Sir NukeSalot (Boss System)
 				{
-					Format(weaponAttribs, sizeof(weaponAttribs), "330 ; 4 ; 466 ; 0 ; 521 ; 1 ; 2 ; 7 ; 6 ; 2 ; 318 ; 1.8 ; 522 ; 1 ; 99 ; 1.2 ; 3 ; 0.5 ; 411 ; 5 ; 103 ; 0.8 ; 107 ; 0.35 ; 329 ; 0.4 ; 26 ; 49825");
+					Format(weaponAttribs, sizeof(weaponAttribs), "330 ; 4 ; 466 ; 0 ; 521 ; 1 ; 2 ; 7 ; 6 ; 2 ; 318 ; 1.8 ; 522 ; 1 ; 99 ; 1.2 ; 3 ; 0.5 ; 411 ; 5 ; 103 ; 0.8 ; 107 ; 0.35 ; 329 ; 0.4 ; 140 ; 49825");
 					SpawnWeapon( iClient, "tf_weapon_cannon", 996, 100, 5, weaponAttribs, false );
 				}
 				else if( iRobotVariant[iClient] == 5 ) //samurai demo dev.
 				{
 					Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 					SpawnWeapon( iClient, "tf_wearable_demoshield", 406, 100, 5, weaponAttribs, true );
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 475 ; 498 ; 1 ; 524 ; 2.3 ; 2 ; 1.5 ; 202 ; 2 ; 249 ; 7 ; 1030 ; 1");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 475 ; 498 ; 1 ; 524 ; 2.3 ; 2 ; 1.5 ; 202 ; 2 ; 249 ; 7 ; 1030 ; 1");
 					SpawnWeapon( iClient, "tf_weapon_katana", 357, 100, 5, weaponAttribs, false );
 				}
 			}
@@ -2923,13 +2939,13 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 		{
 			Format(weaponAttribs, sizeof(weaponAttribs), "692 ; 1");
 			SpawnWeapon( iClient, "tf_wearable", 30147, 100, 5, weaponAttribs, true );
-			if(!IsGateBotPlayer[iClient])
-				SpawnWeapon( iClient, "tf_wearable", 30148, 100, 5, weaponAttribs, true );//roam vision 
+			///if(!IsGateBotPlayer[iClient]) heavy has all times the roam vision hats checked
+			SpawnWeapon( iClient, "tf_wearable", 30148, 100, 5, weaponAttribs, true );//roam vision 
 			if( iRobotVariant[iClient] == 0 || iRobotVariant[iClient] == 6 )
 			{
 				Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 				if( iRobotVariant[iClient] == 6 )
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
 				SpawnWeapon( iClient, "tf_weapon_minigun", 15, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 1 )
@@ -2942,14 +2958,14 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			{
 				SetEntPropFloat( iClient, Prop_Send, "m_flModelScale", 1.5 );
 				UpdatePlayerHitbox(iClient, 1.5); 
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 600");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 600");
 				SpawnWeapon( iClient, "tf_weapon_fists", 331, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 3 || iRobotVariant[iClient] == 5 )
 			{
 				Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 				if( iRobotVariant[iClient] == 5 ) //super heavy chomp
-					Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 4700 ; 107 ; 0.5 ; 2 ; 3 ; 137 ; 60 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2 ; 522 ; 1 ; 6 ; 2.5");
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4700 ; 107 ; 0.5 ; 2 ; 3 ; 137 ; 60 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2 ; 522 ; 1 ; 6 ; 2.5");
 				SpawnWeapon( iClient, "tf_weapon_fists", 43, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 4 )
@@ -2959,27 +2975,27 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			}
 			else if( iRobotVariant[iClient] == 7 )//deflector heavy
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2 ; 323 ; 1");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2 ; 323 ; 1");
 				SpawnWeapon( iClient, "tf_weapon_minigun", 850, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 8 )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
 				SpawnWeapon( iClient, "tf_weapon_minigun", 312, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 9 )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
 				SpawnWeapon( iClient, "tf_weapon_minigun", 41, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 10 )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4700 ; 107 ; 0.5 ; 2 ; 1.5 ; 252 ; 0.3 ; 329 ; 0.3 ; 330 ; 2");
 				SpawnWeapon( iClient, "tf_weapon_minigun", 811, 100, 5, weaponAttribs, false );
 			}
 			else if( iRobotVariant[iClient] == 100 )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "26 ; 59700 ; 107 ; 0.4 ; 57 ; 250 ; 6 ; 0.6 ; 2 ; 5 ; 252 ; 0.3 ; 330 ; 2 ; 405 ; 0.1 ; 478 ; 0.1");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 59700 ; 107 ; 0.4 ; 57 ; 250 ; 6 ; 0.6 ; 2 ; 5 ; 252 ; 0.3 ; 330 ; 2 ; 405 ; 0.1 ; 478 ; 0.1");
 				SpawnWeapon( iClient, "tf_weapon_fists", 331, 100, 5, weaponAttribs, false );
 			}
 			Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
@@ -3001,22 +3017,27 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 			SpawnWeapon( iClient, "tf_weapon_syringegun_medic", 17, 100, 5, weaponAttribs, false );
 			
-			if( iRobotVariant[iClient] >= 3 && iRobotVariant[iClient] <= 4 )
+			if( iRobotVariant[iClient] >= 3 && iRobotVariant[iClient] <= 6 )
 			{
 				if( iRobotVariant[iClient] == 4 )
-					Format(weaponAttribs, sizeof(weaponAttribs), "10 ; 0.1 ; 8 ; 10 ; 479 ; 0");
-				/*else if( iRobotVariant[iClient] == 5 )old Giant Medic		Benoist3012: "Wow you have found my message x), the giant medic will be back in cfg variant!!!"
 				{
-					hAttributes = CreateArray();
-					PushArrayCell( hAttributes, 26 ); PushArrayCell( hAttributes, _:4350.0 );
-					PushArrayCell( hAttributes, 107 ); PushArrayCell( hAttributes, _:0.5 );
-					PushArrayCell( hAttributes, 252 ); PushArrayCell( hAttributes, _:0.6 );
-					PushArrayCell( hAttributes, 329 ); PushArrayCell( hAttributes, _:0.6 );
-					PushArrayCell( hAttributes, 8 ); PushArrayCell( hAttributes, _:200.0 );
-					PushArrayCell( hAttributes, 479 ); PushArrayCell( hAttributes, _:0.0 ); //no overheal
-
-				}*/
-				SpawnWeapon( iClient, "tf_weapon_medigun", 411, 100, 5, weaponAttribs, false );
+					Format(weaponAttribs, sizeof(weaponAttribs), "10 ; 0.1 ; 8 ; 10 ; 479 ; 0");
+					SpawnWeapon( iClient, "tf_weapon_medigun", 411, 100, 5, weaponAttribs, false );
+				}
+				else if( iRobotVariant[iClient] == 6 )//old Giant Medic		Benoist3012: "Wow you have found my message x), the giant medic will be back in cfg variant!!!"
+				{
+					//hAttributes = CreateArray();
+					//PushArrayCell( hAttributes, 26 ); PushArrayCell( hAttributes, _:4350.0 );
+					//PushArrayCell( hAttributes, 107 ); PushArrayCell( hAttributes, _:0.5 );
+					//PushArrayCell( hAttributes, 252 ); PushArrayCell( hAttributes, _:0.6 );
+					//PushArrayCell( hAttributes, 329 ); PushArrayCell( hAttributes, _:0.6 );
+					//PushArrayCell( hAttributes, 8 ); PushArrayCell( hAttributes, _:200.0 ); removed healing bonus
+					//PushArrayCell( hAttributes, 479 ); PushArrayCell( hAttributes, _:0.01 ); //no overheal
+					
+					Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 4350.0 ; 107 ; 0.5 ; 252 ; 0.6 ; 329 ; 0.6");
+					SpawnWeapon( iClient, "tf_weapon_medigun", 998, 100, 5, weaponAttribs, false ); //changed from quick fix to vaccinator
+					ReKILLWearAbles(iClient);
+				}
 			}
 			else if( iRobotVariant[iClient] == 2 ) //crit medic
 			{
@@ -4278,8 +4299,11 @@ public Action:OnSpawnStartTouch( iEntity, iOther )
 {
 	if( !IsMvM() || !IsValidRobot(iOther) || GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) != _:TFTeam_Blue )
 		return Plugin_Continue;
-	
-	bInRespawn[iOther] = true;
+	if(!bInRespawn[iOther])
+	{
+		//PrintToChatAll("enabled bool repsawn");
+		bInRespawn[iOther] = true;
+	}
 	return Plugin_Continue;
 }
 
@@ -4334,8 +4358,13 @@ public Action:OnSpawnEndTouch( iEntity, iOther )
 	if( !IsMvM() || !IsValidRobot(iOther) || GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) != _:TFTeam_Blue )
 		return Plugin_Continue;
 	
+	CreateTimer(0.2, Timer_CheckinSpawn, iOther);
 	bInRespawn[iOther] = false;
 	return Plugin_Continue;
+}
+public Action:Timer_CheckinSpawn(Handle:timer, client)
+{
+	bInRespawn[client] = false;
 }
 public Action:OnCapZoneTouch( iEntity, iOther )
 {
@@ -4577,6 +4606,12 @@ stock StopDeployEnt(client)
 		}
 	} 
 	}
+	KillDeployAnimation3();
+
+	SetEntityRenderColor(client, 255, 255, 255, 255);
+}
+stock KillDeployAnimation3()
+{
 	new i = -1;	
 	while ((i = FindEntityByClassname(i, "prop_dynamic")) != -1)
 	{
@@ -4584,8 +4619,8 @@ stock StopDeployEnt(client)
 	{
 		decl String:strName[50];
 		GetEntPropString(i, Prop_Data, "m_iName", strName, sizeof(strName));
-		new iOwner = GetEntPropEnt( i, Prop_Send, "m_hOwnerEntity" );
-		if(strcmp(strName, "bwrdeployaniment") == 0 && iOwner == client)
+		//new iOwner = GetEntPropEnt( i, Prop_Send, "m_hOwnerEntity" );
+		if(strcmp(strName, "bwrdeployaniment") == 0 )//&& iOwner == client)
 		{
 		//if(iOwner == client)
 			AcceptEntityInput(i,"KillHierarchy");
@@ -4593,7 +4628,6 @@ stock StopDeployEnt(client)
 		}
 	} 
 	}
-	SetEntityRenderColor(client, 255, 255, 255, 255);
 }
 
 public Action:OnTriggerUpgradestationtouch( iEntity, iOther )
@@ -4742,7 +4776,7 @@ public Action:OnTakeDamage( iVictim, &iAttacker, &iInflictor, &Float:flDamage, &
 				return Plugin_Changed;
 			}
 		}
-		if( GetClientTeam(iVictim) == _:TFTeam_Red && bInRespawn[iAttacker] )
+		if( GetClientTeam(iVictim) == _:TFTeam_Red && bInRespawn[iAttacker] && iAttacker != iVictim )
 		{
 			flDamage = 0.0;
 			return Plugin_Changed;
@@ -4788,11 +4822,12 @@ stock bool:IsValidMvMRobot( iClient )
 public Action:NormalSoundHook( iClients[64], &iNumClients, String:strSound[PLATFORM_MAX_PATH], &iEntity, &iChannel, &Float:flVolume, &iLevel, &iPitch, &iFlags )
 {
 	//if( StrContains( strSound, "vo/mvm_", false ) != -1 ) PrintToServer( "%s %d %f %d %d %d", strSound, iChannel, flVolume, iLevel, iPitch, iFlags );
-	
 	if( !IsMvM() || !IsValidRobot(iEntity) )
 		return Plugin_Continue;
 	
 	new TFClassType:iClass = TF2_GetPlayerClass( iEntity );
+	//if( iClass == TFClass_Medic )
+	//	PrintToServer( "%s", strSound);
 	if( StrContains( strSound, "announcer", false ) != -1 )
 		return Plugin_Continue;
 	//if( StrContains( strSound, "demo_charge_windup", false ) != -1 )
@@ -4874,7 +4909,7 @@ public Action:NormalSoundHook( iClients[64], &iNumClients, String:strSound[PLATF
 		)
 			return Plugin_Continue;
 		
-		if( iRobotMode[iEntity] == Robot_Giant ) // || iRobotMode[iEntity] == Robot_BigNormal )
+		if( iRobotMode[iEntity] == Robot_Giant && iClass != TFClass_Medic) // || iRobotMode[iEntity] == Robot_BigNormal )
 		{
 			switch( iClass )
 			{
@@ -4911,16 +4946,19 @@ public Action:NormalSoundHook( iClients[64], &iNumClients, String:strSound[PLATF
 		else
 			ReplaceString( strSound, sizeof( strSound ), "vo/", "vo/mvm/norm/", false );
 		ReplaceString( strSound, sizeof( strSound ), ".wav", ".mp3", false );
+		
+		//if( StrContains( strSound, "sniper_mvm_SpecialWeapon", false ) != -1)
+		//	ReplaceString( strSound, sizeof( strSound ), "vo/", ")vo/", false ); fix sniper knife vo missing flag?
+			//return Plugin_Stop;
 		PrecacheSound( strSound );
 		
 		decl String:strSoundCheck[PLATFORM_MAX_PATH];
 		Format( strSoundCheck, sizeof(strSoundCheck), "sound/%s", strSound );
 		if( !FileExists(strSoundCheck,true) )
 		{
-//			PrintToServer( "Missing sound: %s", strSound );
+			//PrintToServer( "Missing sound: %s", strSound );
 			return Plugin_Stop;
 		}
-		
 		return Plugin_Changed;
 	}
 	
@@ -5196,11 +5234,12 @@ stock PickRandomRobot( iClient, bool:bChangeClass = true )
 	//SetClassVariant( iClient, TFClass_DemoMan, SENTRYBUSTER_CLASSVARIANT );
 	//return;
 	
-	if(g_CanDispatchSentryBuster==true && iRobotMode[iClient] != Robot_SentryBuster && !IsFakeClient(iClient) && flLastSentryBuster + 40.0 < GetGameTime()) //&& GetRandomInt(0,9) > 8 10%
+	if(g_CanDispatchSentryBuster==true && iRobotMode[iClient] != Robot_SentryBuster && !IsFakeClient(iClient) && flLastSentryBuster + 40.0 < GetGameTime() && GetRandomInt(1,5) > 4) //&& GetRandomInt(0,9) > 8 10%
 	{
 		//PrintToChatAll("Sentry Buster dispatched.");
 		SetClassVariant( iClient, TFClass_DemoMan, SENTRYBUSTER_CLASSVARIANT );
 		//moved engineer speach code to on spawn
+		flLastSentryBuster = GetEngineTime();
 		g_CanDispatchSentryBuster = false;
 		return;
 	}
@@ -5351,7 +5390,7 @@ stock PickRandomClassVariant( TFClassType:iClass = TFClass_Unknown )
 	}
 	switch( iClass )
 	{
-		case TFClass_Medic:		return !bGiants ? GetRandomInt(0,5) : GetRandomInt(0,5); //giant medic is disabled
+		case TFClass_Medic:		return !bGiants ? GetRandomInt(0,5) : GetRandomInt(0,6); //giant medic is disabled
 		case TFClass_Sniper:	return GetRandomInt(0,4);
 		case TFClass_Spy:		return GetRandomInt(-1,0);	//0;
 		case TFClass_Engineer:	
@@ -5498,7 +5537,7 @@ stock bool:SetClassVariant( iClient, TFClassType:iClass = TFClass_Unknown, iSVar
 			}
 			case TFClass_Medic:
 			{
-				if( iVariant >= 0 && iVariant <= 5 )
+				if( iVariant >= 0 && iVariant <= 6 )
 				{
 					bValidVariant = true;
 					
@@ -5507,8 +5546,8 @@ stock bool:SetClassVariant( iClient, TFClassType:iClass = TFClass_Unknown, iSVar
 					
 					if( iVariant == 0 )
 						iMode = Robot_Stock;
-					/*else if( iVariant == 5 )
-						iMode = Robot_Giant;*/
+					if( iVariant == 6 )
+						iMode = Robot_Giant;
 				}
 			}
 			case TFClass_Sniper:
@@ -5660,9 +5699,11 @@ stock FindRandomSpawnPoint( iType )
 
 stock ResetData( iClient, bool:bFullReset = false )
 {
-	if( iClient < 0 || iClient >= MAXPLAYERS )
+	if( iClient < 1 || iClient > MAXPLAYERS )//>= if( iClient < 0 || iClient >= MAXPLAYERS )
 		return;
 	
+	//if(GetClientTeam(i) == _:TFTeam_Red)
+	//	bInRespawn[iClient] = false;
 	iRobotClass[iClient] = TFClass_Unknown;
 	iRobotMode[iClient] = Robot_Normal;
 	if( IsValidClient(iClient) && TF2_GetPlayerClass(iClient) == TFClass_Spy )
@@ -5771,7 +5812,29 @@ stock StripItems( iClient )
 		}
 	}
 }
-
+stock ReKILLWearAbles(iClient)
+{
+	new iEntity = -1;
+	while( ( iEntity = FindEntityByClassname( iEntity, "tf_wearable" ) ) > MaxClients )
+	{
+		new iOwner = GetEntPropEnt( iEntity, Prop_Send, "m_hOwnerEntity" );
+		if( iOwner == iClient )
+		{
+			if(GetEntProp(iEntity , Prop_Send, "m_iItemDefinitionIndex") != 30065)
+			{
+				if( hSDKRemoveWearable != INVALID_HANDLE )
+					SDKCall( hSDKRemoveWearable, iClient, iEntity );
+				AcceptEntityInput( iEntity, "Kill" );
+			}
+			if(GetEntProp(iEntity , Prop_Send, "m_iItemDefinitionIndex") == 30065 )
+			{
+				SetEntityRenderMode(iEntity, RENDER_TRANSCOLOR);
+				SetEntityRenderColor(iEntity, 255, 255, 255, 0);
+			}
+					
+		}
+	}
+}
 stock FixTPose( iClient )
 {
 	new iWeapon = -1;
@@ -5972,6 +6035,7 @@ stock bool:GetRobotVariantName( TFClassType:iClass, iVariant, String:strBuffer[]
 				case 3: strcopy( strBuffer, iBufferSize, "Quick-Fix Medic" );
 				case 4: strcopy( strBuffer, iBufferSize, "BigHeal Medic" );
 				case 5: strcopy( strBuffer, iBufferSize, "Shield Medic" );
+				case 6: strcopy( strBuffer, iBufferSize, "Giant Medic" );
 			}
 		}
 		case TFClass_Heavy:
@@ -6011,7 +6075,7 @@ stock bool:GetRobotVariantName( TFClassType:iClass, iVariant, String:strBuffer[]
 		{
 			switch( iVariant )
 			{
-				case -1: strcopy( strBuffer, iBufferSize, "Your own Spy" );
+				case -1: strcopy( strBuffer, iBufferSize, "Your Spy" );
 				case 0: strcopy( strBuffer, iBufferSize, "Normal Spy" );
 			}
 		}
@@ -6059,8 +6123,8 @@ stock ShowClassMenu( iClient, TFClassType:iClass = TFClass_Unknown )
 	if( !IsValidClient( iClient ) )
 		return;
 		
-	if(GameRules_GetRoundState() == RoundState_BetweenRounds)
-		TeleportToSpawnArea(iClient);
+	//if(GameRules_GetRoundState() == RoundState_BetweenRounds)
+	//	CreateExtraSpawnAreas(iClient);
 	
 	new Handle:hMenu, bool:bGiants = false, i;
 	decl String:strVariantID[16], String:strVariantName[32];
@@ -6962,7 +7026,10 @@ public Action:OnPlayerDeathPre(Handle:event, const String:name[], bool:dontBroad
 		return Plugin_Handled;
 	new client = GetClientOfUserId(GetEventInt(event, "userid"));
 	if( GameRules_GetRoundState() == RoundState_BetweenRounds && GetClientTeam(client) == _:TFTeam_Blue )
+	{
+//		SetEventBool(event, "silent_kill", true);
 		SetEntProp( client, Prop_Send, "m_bIsMiniBoss", _:false );
+	}
 		
 	if( GameRules_GetRoundState() == RoundState_RoundRunning && bEnableBuster && !g_CanDispatchSentryBuster ) // && iRobotMode[iClient] != Robot_SentryBuster && bEnableBuster)  // && GetRandomInt(0,9) == 0 && CheckCommandAccess( iClient, "tf2bwr_sentrybuster", 0, true ) )
 	{
@@ -7126,10 +7193,10 @@ public TF2_OnConditionAdded(client, TFCond:condition)
 		TF2Attrib_SetByName(client, "airblast vulnerability multiplier hidden", 0.01);
 		SetSentryTarget(client, false);
 	}
-	if(condition==TFCond_UberchargedHidden && GetClientTeam(client) == _:TFTeam_Blue && IsUpradeableCarrier(client))
+	if(condition==TFCond_UberchargedHidden && GetClientTeam(client) == _:TFTeam_Blue && !IsFakeClient(client))//IsUpradeableCarrier(client)
 	{	
-		if(bool:GetEntProp(client, Prop_Send, "m_bGlowEnabled") == true)
-		{
+		//if(bool:GetEntProp(client, Prop_Send, "m_bGlowEnabled") == true)
+		//{
 			if (g_hbombs1[client] != INVALID_HANDLE)
 			{
 				CloseHandle(g_hbombs1[client]);
@@ -7146,11 +7213,9 @@ public TF2_OnConditionAdded(client, TFCond:condition)
 				g_hbombs3[client] = INVALID_HANDLE;
 			}
 			new BombOwner = FindEntityByClassname(-1, "tf_objective_resource");
-			//new Float:CurrentTime = GetGameTime();
-			//new Float:NextTime = CurrentTime+9999.0;
 			SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", -1.0);
 			SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", -1.0);
-		}
+		//}
 	}
 }
 public TF2_OnConditionRemoved(client, TFCond:condition)
@@ -7161,33 +7226,36 @@ public TF2_OnConditionRemoved(client, TFCond:condition)
 		TF2Attrib_RemoveByName(client, "airblast vulnerability multiplier hidden");
 		SetSentryTarget(client, true);
 		
-		if(bool:GetEntProp(client, Prop_Send, "m_bGlowEnabled") == true && IsUpradeableCarrier(client))
+		if(g_hbombs1[client] == INVALID_HANDLE && g_hbombs2[client] == INVALID_HANDLE && g_hbombs3[client] == INVALID_HANDLE)
 		{
-			new BombOwner = FindEntityByClassname(-1, "tf_objective_resource");
-			new Float:CurrentTime = GetGameTime();
-			if(BombStage[client] == 0)
+			if(bool:GetEntProp(client, Prop_Send, "m_bGlowEnabled") == true && IsUpradeableCarrier(client))
 			{
-				new Float:NextTime = CurrentTime+5.2;
-				SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", CurrentTime);
-				SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", NextTime);
-				g_hbombs1[client] = CreateTimer(5.0, Timer_bombst1, client);
-				g_hbombs2[client] = CreateTimer(20.0, Timer_bombst2, client);
-				g_hbombs3[client] = CreateTimer(35.0, Timer_bombst3, client);
-			}
-			if(BombStage[client] == 1)
-			{
-				new Float:NextTime = CurrentTime+15.0;
-				SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", CurrentTime);
-				SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", NextTime);
-				g_hbombs2[client] = CreateTimer(15.0, Timer_bombst2, client);
-				g_hbombs3[client] = CreateTimer(30.0, Timer_bombst3, client);
-			}
-			if(BombStage[client] == 2)
-			{
-				new Float:NextTime = CurrentTime+14.5;
-				SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", CurrentTime);
-				SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", NextTime);
-				g_hbombs3[client] = CreateTimer(15.0, Timer_bombst3, client);
+				new BombOwner = FindEntityByClassname(-1, "tf_objective_resource");
+				new Float:CurrentTime = GetGameTime();
+				if(BombStage[client] == 0)
+				{
+					new Float:NextTime = CurrentTime+5.2;
+					SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", CurrentTime);
+					SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", NextTime);
+					g_hbombs1[client] = CreateTimer(5.0, Timer_bombst1, client);
+					g_hbombs2[client] = CreateTimer(20.0, Timer_bombst2, client);
+					g_hbombs3[client] = CreateTimer(35.0, Timer_bombst3, client);
+				}
+				if(BombStage[client] == 1)
+				{
+					new Float:NextTime = CurrentTime+15.0;
+					SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", CurrentTime);
+					SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", NextTime);
+					g_hbombs2[client] = CreateTimer(15.0, Timer_bombst2, client);
+					g_hbombs3[client] = CreateTimer(30.0, Timer_bombst3, client);
+				}
+				if(BombStage[client] == 2)
+				{
+					new Float:NextTime = CurrentTime+14.5;
+					SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMBaseBombUpgradeTime", CurrentTime);
+					SetEntPropFloat(BombOwner, Prop_Send, "m_flMvMNextBombUpgradeTime", NextTime);
+					g_hbombs3[client] = CreateTimer(15.0, Timer_bombst3, client);
+				}
 			}
 		}
 	}
@@ -7645,7 +7713,8 @@ public Action:Timer_SetNoUpgrade( Handle:hTimer, any:iEntity )
 }
 public TF2_OnWaitingForPlayersStart()
 {
-	flNextChangeTeamBlu = GetGameTime() + 5.2;
+	CreateExtraSpawnAreas();
+	flNextChangeTeamBlu = GetGameTime() + 3.2;
 	if(nGateCapture != 0)
 		nGateCapture = 0;
 	if(GateStunEnabled)
@@ -7713,29 +7782,68 @@ stock LookAtTarget(any:client, any:target, bool:DEntity)
     angles[1] -= 180;
     TeleportEntity(client, NULL_VECTOR, angles, NULL_VECTOR);
 }
-stock TeleportToSpawnArea(client)
+stock CreateExtraSpawnAreas()
 {
 	new i = -1;
 	while ((i = FindEntityByClassname(i, "info_player_teamspawn")) != -1)
 	{
-		if(IsValidEntity(i) && GetEntProp( i, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue && bool:GetEntProp( i, Prop_Data, "m_bDisabled" ) == false) //m_bDisabled
+		if(IsValidEntity(i) && GetEntProp( i, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue)//&& bool:GetEntProp( i, Prop_Data, "m_bDisabled" ) == false) //m_bDisabled
 		{
-			decl String:strName[50];
-			GetEntPropString(i, Prop_Data, "m_iName", strName, sizeof(strName));
-			if(strcmp(strName, "spawnbot") == 0)
-			{
-				new Float:pos[3];
-				GetEntPropVector(i, Prop_Send, "m_vecOrigin", pos);
-				TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
-				break;
-			}
+			SpawnFuncSpawnZone(i);
+			//decl String:strName[50];
+			//GetEntPropString(i, Prop_Data, "m_iName", strName, sizeof(strName));
+			//if(strcmp(strName, "spawnbot") == 0)
+			//{
+			//	new Float:pos[3];
+			//	GetEntPropVector(i, Prop_Send, "m_vecOrigin", pos);
+			//	TeleportEntity(client, pos, NULL_VECTOR, NULL_VECTOR);
+			//	break;
+			//}
 		}
 	}
 }
+stock SpawnFuncSpawnZone(infoplayerspawn)
+{
+	new entindex = CreateEntityByName("func_respawnroom");
+	if (entindex != -1) //dispatch ent properites
+	{
+		DispatchKeyValue(entindex, "StartDisabled", "0");
+		DispatchKeyValue(entindex, "TeamNum", "3");
+		DispatchKeyValue(entindex, "spawnflags", "2");
+		DispatchKeyValue(entindex, "targetname", "SpawnZoneBluBWR");
+	}
+
+	DispatchSpawn(entindex);
+	ActivateEntity(entindex);
+
+	PrecacheModel("models/player/items/pyro/drg_pyro_fueltank.mdl");
+	SetEntityModel(entindex, "models/player/items/pyro/drg_pyro_fueltank.mdl");
+
+	new Float:minbounds[3] = {-10.0, -10.0, -50.0};
+	new Float:maxbounds[3] = {50.0, 50.0, 50.0};
+	SetEntPropVector(entindex, Prop_Send, "m_vecMins", minbounds);
+	SetEntPropVector(entindex, Prop_Send, "m_vecMaxs", maxbounds);
+    
+	SetEntProp(entindex, Prop_Send, "m_nSolidType", 2);
+
+	new enteffects = GetEntProp(entindex, Prop_Send, "m_fEffects");
+	enteffects |= 32;
+	SetEntProp(entindex, Prop_Send, "m_fEffects", enteffects);
+	
+	new Float:pos[3];
+	GetEntPropVector(infoplayerspawn, Prop_Send, "m_vecOrigin", pos);
+	TeleportEntity(entindex, pos, NULL_VECTOR, NULL_VECTOR);
+	
+	//SDKHook(entindex, SDKHook_Touch, OnSpawnStartTouch );
+	//SDKHook(entindex, SDKHook_EndTouch, OnSpawnEndTouch2 );
+
+//	PrintToChatAll("Created the func_capzone");
+}
 public Action:Timer_BuildingSmash( Handle:hTimer, any:client )
 {
-	if(!IsValidEntity(client))
+	if(!IsValidClient(client))
 		return Plugin_Stop;
+	SetEntProp( client, Prop_Send, "m_nBotSkill", BotSkill_Easy );
 	if(bool:GetEntProp(client, Prop_Send, "m_bIsMiniBoss") == false)
 		return Plugin_Stop;
 	if(bool:GetEntProp(client, Prop_Send, "m_bGlowEnabled") == false)
