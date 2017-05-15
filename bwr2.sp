@@ -14,7 +14,7 @@
 
 #pragma semicolon					1
 
-#define PLUGIN_VERSION				"BWR2 1.5.4"
+#define PLUGIN_VERSION				"BWR2 1.5.4A"
 #define PLUGIN_TAG					"BWR2"
 
 //#define PLUGIN_UPDATE_URL			""
@@ -7356,7 +7356,9 @@ public Action:Timer_DefenseBuff( Handle:hTimer, any:client)
 public Action:Event_Player_BuiltObject(Handle:event, const String:name[], bool:dontBroadcast)
 {
 	new index = GetEventInt(event, "index");
-	CreateTimer( 0.1, Timer_BuildingCall, index );
+	new iClient = GetClientOfUserId( GetEventInt( event, "userid" ) );
+	if(!IsFakeClient(iClient))
+		CreateTimer( 0.1, Timer_BuildingCall, index );
 }
 
 public Action:Timer_BuildingCall( Handle:hTimer, any:index )
