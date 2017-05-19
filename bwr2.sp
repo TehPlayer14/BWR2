@@ -14,7 +14,7 @@
 
 #pragma semicolon					1
 
-#define PLUGIN_VERSION				"BWR2 1.5.4A"
+#define PLUGIN_VERSION				"BWR2 1.5.4B"
 #define PLUGIN_TAG					"BWR2"
 
 //#define PLUGIN_UPDATE_URL			""
@@ -144,6 +144,7 @@ new Float:flBossWaitTime;
 //fix bools
 new bool:IsDecoy;
 new bool:IsntStock[MAXPLAYERS]; //used just for giant blackbox soldier for sndfix
+//IsSpawnedSpawnroom[2069];
 
 new CaseClamping = -1;//
 
@@ -269,9 +270,9 @@ public Plugin:myinfo =
 	author = "TehPlayer14", 
 	description = "Allows players to play as robot on MvM mode.",
 	version = PLUGIN_VERSION,
-	url = "http://www.sourcemod.net"
+	url = "https://github.com/Michal1324"
 	//Old BWR2 Benoist3012
-	//Orginal(Leonardo)
+	//Original(Leonardo)
 }
 
 public OnPluginStart()
@@ -584,8 +585,8 @@ public OnMapStart()
 		while( ( iEnt = FindEntityByClassname( iEnt, "func_respawnroom") ) != -1 )
 			if( GetEntProp( iEnt, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
 			{
-				//SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
 				SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
+				SDKHook( iEnt, SDKHook_StartTouch, OnSpawnStartTouch );
 				SDKHook( iEnt, SDKHook_EndTouch, OnSpawnEndTouch );
 			}
 		iEnt = -1;
@@ -1017,9 +1018,12 @@ public OnEntityCreated( iEntity, const String:strClassname[] )
 	{
 		if( GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
 		{
-		//SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
+			//if(!IsSpawnedSpawnroom[iEntity])
+			//{
+			SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
 			SDKHook( iEntity, SDKHook_Touch, OnSpawnStartTouch );
 			SDKHook( iEntity, SDKHook_EndTouch, OnSpawnEndTouch );
+			//}
 		}
 	}
 	else if( StrEqual( strClassname, "func_capturezone", false ) )
@@ -3974,6 +3978,8 @@ public Action:WaveStart(Handle:event, const String:name[], bool:dontBroadcast)
 	LoadTF2bwrConfigs(waveIndex);
 	///BOMB TELEPORT
 //	CreateTimer(3.0, Teleport_Bomb);//Prevent bug when a popfile change the intel
+
+	flLastSentryBuster = GetGameTime()+20.0;
 }
 public Action:Timer_SetBannerCharge( Handle:hTimer, client)
 {
@@ -4299,11 +4305,11 @@ public Action:OnSpawnStartTouch( iEntity, iOther )
 {
 	if( !IsMvM() || !IsValidRobot(iOther) || GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) != _:TFTeam_Blue )
 		return Plugin_Continue;
-	if(!bInRespawn[iOther])
-	{
+	//if(!bInRespawn[iOther])
+	//{
 		//PrintToChatAll("enabled bool repsawn");
-		bInRespawn[iOther] = true;
-	}
+	bInRespawn[iOther] = true;
+	//}
 	return Plugin_Continue;
 }
 
@@ -4358,12 +4364,13 @@ public Action:OnSpawnEndTouch( iEntity, iOther )
 	if( !IsMvM() || !IsValidRobot(iOther) || GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) != _:TFTeam_Blue )
 		return Plugin_Continue;
 	
-	CreateTimer(0.2, Timer_CheckinSpawn, iOther);
+	//CreateTimer(0.01, Timer_CheckinSpawn, iOther);
 	bInRespawn[iOther] = false;
 	return Plugin_Continue;
 }
 public Action:Timer_CheckinSpawn(Handle:timer, client)
 {
+
 	bInRespawn[client] = false;
 }
 public Action:OnCapZoneTouch( iEntity, iOther )
@@ -5234,12 +5241,12 @@ stock PickRandomRobot( iClient, bool:bChangeClass = true )
 	//SetClassVariant( iClient, TFClass_DemoMan, SENTRYBUSTER_CLASSVARIANT );
 	//return;
 	
-	if(g_CanDispatchSentryBuster==true && iRobotMode[iClient] != Robot_SentryBuster && !IsFakeClient(iClient) && flLastSentryBuster + 40.0 < GetGameTime() && GetRandomInt(1,5) > 4) //&& GetRandomInt(0,9) > 8 10%
+	if(g_CanDispatchSentryBuster==true && iRobotMode[iClient] != Robot_SentryBuster && !IsFakeClient(iClient) && flLastSentryBuster + 35.0 < GetGameTime())// && GetRandomInt(1,5) > 4) //&& GetRandomInt(0,9) > 8 10%
 	{
 		//PrintToChatAll("Sentry Buster dispatched.");
 		SetClassVariant( iClient, TFClass_DemoMan, SENTRYBUSTER_CLASSVARIANT );
 		//moved engineer speach code to on spawn
-		flLastSentryBuster = GetEngineTime();
+		flLastSentryBuster = GetGameTime();
 		g_CanDispatchSentryBuster = false;
 		return;
 	}
@@ -7039,8 +7046,8 @@ public Action:OnPlayerDeathPre(Handle:event, const String:name[], bool:dontBroad
 			//PrintToChatAll("enabled bool.");
 			g_CanDispatchSentryBuster = true;
 		}
-		else
-			g_CanDispatchSentryBuster = false;
+		//else
+		//	g_CanDispatchSentryBuster = false;
 	}
 	//moved setbuster code somewhere else
 	/*if( GetClientTeam(client) == _:TFTeam_Blue)
@@ -7715,7 +7722,7 @@ public Action:Timer_SetNoUpgrade( Handle:hTimer, any:iEntity )
 }
 public TF2_OnWaitingForPlayersStart()
 {
-	CreateExtraSpawnAreas();
+	//CreateExtraSpawnAreas();
 	flNextChangeTeamBlu = GetGameTime() + 3.2;
 	if(nGateCapture != 0)
 		nGateCapture = 0;
@@ -7816,6 +7823,7 @@ stock SpawnFuncSpawnZone(infoplayerspawn)
 	}
 
 	DispatchSpawn(entindex);
+	//IsSpawnedSpawnroom[entindex] = true;
 	ActivateEntity(entindex);
 
 	PrecacheModel("models/player/items/pyro/drg_pyro_fueltank.mdl");
@@ -7836,8 +7844,8 @@ stock SpawnFuncSpawnZone(infoplayerspawn)
 	GetEntPropVector(infoplayerspawn, Prop_Send, "m_vecOrigin", pos);
 	TeleportEntity(entindex, pos, NULL_VECTOR, NULL_VECTOR);
 	
-	//SDKHook(entindex, SDKHook_Touch, OnSpawnStartTouch );
-	//SDKHook(entindex, SDKHook_EndTouch, OnSpawnEndTouch2 );
+	SDKHook(entindex, SDKHook_StartTouch, OnSpawnStartTouch );
+	SDKHook(entindex, SDKHook_EndTouch, OnSpawnEndTouch );
 
 //	PrintToChatAll("Created the func_capzone");
 }
@@ -7924,6 +7932,8 @@ public Action:OnBuildCarry( Handle:hEvent, const String:strEventName[], bool:bDo
 }
 public OnEntityDestroyed(obj)
 {
+	//if(IsSpawnedSpawnroom[obj])
+	//	IsSpawnedSpawnroom[obj] = false;
 	if(2069 > obj > -1 && IsValidEntity(obj))
 	{
 		WasCarried[obj] = false;
