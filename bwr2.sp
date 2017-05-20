@@ -14,7 +14,7 @@
 
 #pragma semicolon					1
 
-#define PLUGIN_VERSION				"BWR2 1.5.4B"
+#define PLUGIN_VERSION				"BWR2 1.5.4C"
 #define PLUGIN_TAG					"BWR2"
 
 //#define PLUGIN_UPDATE_URL			""
@@ -572,7 +572,7 @@ public OnMapStart()
 	{
 		ServerCommand("sm plugins unload betherobot");
 		//ServerCommand("sv_tags %s", PLUGIN_VERSION);
-		ServerCommand("sv_tags %s", PLUGIN_TAG);
+		//ServerCommand("sm_rcon sv_tags %s", PLUGIN_TAG);
 
 		new iEnt = -1;
 		while( ( iEnt = FindEntityByClassname( iEnt, "item_teamflag") ) != -1 )
