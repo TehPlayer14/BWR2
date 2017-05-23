@@ -7,14 +7,17 @@
 #define AUTOLOAD_EXTENSIONS
 #include <sdkhooks>
 #include <tf2items>
+
 #define REQUIRE_PLUGIN
 #include <adminmenu>
+
 #undef REQUIRE_PLUGIN
 
+#define SVTAGSIZE 256
 
 #pragma semicolon					1
 
-#define PLUGIN_VERSION				"BWR2 1.5.4C"
+#define PLUGIN_VERSION				"BWR2 1.5.5"
 #define PLUGIN_TAG					"BWR2"
 
 //#define PLUGIN_UPDATE_URL			""
@@ -144,6 +147,9 @@ new Float:flBossWaitTime;
 //fix bools
 new bool:IsDecoy;
 new bool:IsntStock[MAXPLAYERS]; //used just for giant blackbox soldier for sndfix
+new Handle:g_hCustomTags;
+new Handle: sv_tags;
+new bool:g_bIgnoreNextTagChange = false;
 //IsSpawnedSpawnroom[2069];
 
 new CaseClamping = -1;//
@@ -277,10 +283,17 @@ public Plugin:myinfo =
 
 public OnPluginStart()
 {
+	g_hCustomTags = CreateArray(SVTAGSIZE);
+	sv_tags = FindConVar("sv_tags");
+
+	MyAddServerTag("BWR2");
+
 	sm_tf2bwr_version1 = CreateConVar( "sm_tf2bwr_version1", PLUGIN_VERSION, "TF2 Be With Robots 2", FCVAR_PLUGIN|FCVAR_REPLICATED ); //|FCVAR_NOTIFY
 	SetConVarString( sm_tf2bwr_version1, PLUGIN_VERSION, true, true );
 	HookConVarChange( sm_tf2bwr_version1, OnConVarChanged_PluginVersion );
 			
+	CreateConVar("bwr2_version", "", "BWR2", FCVAR_PLUGIN|FCVAR_NOTIFY);		
+	
 	cvarOutlineEnable = CreateConVar("sm_tf2bwr_bulding_outline_enable", "1", "Outline Bulding?", FCVAR_NONE, true, 0.0, true, 1.0);
 	
 	cvarSentryVision = CreateConVar("sm_tf2bwr_bulding_outline", "1", "Add up the number, Sentry:1,Dispenser:2,Teleporter:4");
@@ -364,6 +377,10 @@ public OnPluginStart()
 	//AddCommandListener( Command_ChangeRoboClass, "changeclass" ); broken
 	AddCommandListener( Command_Listener );
 	
+	if (sv_tags != INVALID_HANDLE)
+	{
+		HookConVarChange(sv_tags, OnSVTagsChange); //tags hook
+	}
 	decl String:strCmdDescr[128];
 	Format( strCmdDescr, sizeof(strCmdDescr), "%s Display robot menu", PLUGIN_TAG );
 	RegConsoleCmd( "sm_robotmenu", Command_ChangeClassMenu, strCmdDescr );
@@ -485,6 +502,23 @@ public OnPluginStart()
 	CreateTimer(901.0, Timer_Announce, _, TIMER_REPEAT);
 	CreateTimer(105.0, Timer_Announce2, _, TIMER_REPEAT);
 }
+public OnSVTagsChange(Handle:cvar, const String:oldVal[], const String:newVal[])
+{
+	if (g_bIgnoreNextTagChange)
+	{
+		// we fired this callback, no need to reapply tags
+		return;
+	}
+	
+	// reapply each custom tag
+	new cnt = GetArraySize(g_hCustomTags);
+	for (new i = 0; i < cnt; i++)
+	{
+		decl String:tag[SVTAGSIZE];
+		GetArrayString(g_hCustomTags, i, tag, sizeof(tag));
+		MyAddServerTag(tag);
+	}
+}
 
 public Action:Timer_Announce(Handle:hTimer)
 {
@@ -586,7 +620,7 @@ public OnMapStart()
 			if( GetEntProp( iEnt, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
 			{
 				SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
-				SDKHook( iEnt, SDKHook_StartTouch, OnSpawnStartTouch );
+				//SDKHook( iEnt, SDKHook_StartTouch, OnSpawnStartTouch );
 				SDKHook( iEnt, SDKHook_EndTouch, OnSpawnEndTouch );
 			}
 		iEnt = -1;
@@ -1020,7 +1054,7 @@ public OnEntityCreated( iEntity, const String:strClassname[] )
 		{
 			//if(!IsSpawnedSpawnroom[iEntity])
 			//{
-			SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
+			//SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
 			SDKHook( iEntity, SDKHook_Touch, OnSpawnStartTouch );
 			SDKHook( iEntity, SDKHook_EndTouch, OnSpawnEndTouch );
 			//}
@@ -1815,6 +1849,7 @@ public Action:Timer_OnPlayerSpawn( Handle:hTimer, any:iUserID )
 			KillTimer( hTimer_SentryBuster_Beep[iClient] );
 		hTimer_SentryBuster_Beep[iClient] = CreateTimer( 5.0, Timer_SentryBuster_Beep, GetClientUserId(iClient), TIMER_REPEAT );
 		TriggerTimer( hTimer_SentryBuster_Beep[iClient] );
+		//flLastSentryBuster = GetGameTime+35.0();
 		
 		for(new i = 1; i <= MaxClients; i++)//engineer speach red
 		{
@@ -1833,7 +1868,7 @@ public Action:Timer_OnPlayerSpawn( Handle:hTimer, any:iUserID )
 		g_CanDispatchSentryBuster = false;
 		if( ( flLastAnnounce + 10.0 ) < GetEngineTime() && GameRules_GetRoundState() == RoundState_RoundRunning )
 		{
-			if( ( flLastSentryBuster + 50.0 ) > GetEngineTime() ) switch( GetRandomInt(0,1) )
+			if( ( flLastSentryBuster + 60.0 ) > GetEngineTime() ) switch( GetRandomInt(0,1) )
 			{
 				case 1: Format( strAnnounceLine, sizeof(strAnnounceLine), "vo/mvm_sentry_buster_alerts02.mp3" );
 				default: Format( strAnnounceLine, sizeof(strAnnounceLine), "vo/mvm_sentry_buster_alerts03.mp3" );
@@ -2878,7 +2913,7 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 			}
 			if( iRobotVariant[iClient] == SENTRYBUSTER_CLASSVARIANT )
 			{
-				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2325 ; 107 ; 1.42 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 7 ; 402 ; 1 ; 137 ; 75 ; 396 ; 0.5");
+				Format(weaponAttribs, sizeof(weaponAttribs), "140 ; 2325 ; 107 ; 1.4 ; 252 ; 0.5 ; 329 ; 0.5 ; 330 ; 7 ; 402 ; 1 ; 137 ; 75 ; 396 ; 0.5");//fixed sentrybuster speed
 				SpawnWeapon( iClient, "tf_weapon_stickbomb", 307, 100, 5, weaponAttribs, false );
 				Format(weaponAttribs, sizeof(weaponAttribs), "692 ; 1");
 				SpawnWeapon( iClient, "tf_wearable", 30161, 100, 5, weaponAttribs, true );
@@ -3028,7 +3063,12 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 					Format(weaponAttribs, sizeof(weaponAttribs), "10 ; 0.1 ; 8 ; 10 ; 479 ; 0");
 					SpawnWeapon( iClient, "tf_weapon_medigun", 411, 100, 5, weaponAttribs, false );
 				}
-				else if( iRobotVariant[iClient] == 6 )//old Giant Medic		Benoist3012: "Wow you have found my message x), the giant medic will be back in cfg variant!!!"
+				else if( iRobotVariant[iClient] == 3 )
+				{
+					Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
+					SpawnWeapon( iClient, "tf_weapon_medigun", 411, 100, 5, weaponAttribs, false );
+				}
+				else if( iRobotVariant[iClient] == 6 )//old Giant Medic		//Benoist3012: "Wow you have found my message x), the giant medic will be back in cfg variant!!!"
 				{
 					//hAttributes = CreateArray();
 					//PushArrayCell( hAttributes, 26 ); PushArrayCell( hAttributes, _:4350.0 );
@@ -3042,6 +3082,11 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 					SpawnWeapon( iClient, "tf_weapon_medigun", 998, 100, 5, weaponAttribs, false ); //changed from quick fix to vaccinator
 					ReKILLWearAbles(iClient);
 				}
+				else if( iRobotVariant[iClient] == 5 ) //shield medic
+				{
+					Format(weaponAttribs, sizeof(weaponAttribs), "499 ; 2 ; 479 ; 0");
+					SpawnWeapon( iClient, "tf_weapon_medigun", 29, 100, 5, weaponAttribs, false );
+				}
 			}
 			else if( iRobotVariant[iClient] == 2 ) //crit medic
 			{
@@ -3053,8 +3098,6 @@ public OnPostInventoryApplication( Handle:hEvent, const String:strEventName[], b
 				Format(weaponAttribs, sizeof(weaponAttribs), "704 ; 0");
 				if( iRobotVariant[iClient] == 1 )
 					Format(weaponAttribs, sizeof(weaponAttribs), "10 ; 5 ; 8 ; 0.1 ; 314 ; -3 ; 479 ; 0");
-				else if( iRobotVariant[iClient] == 5 ) //shield medic
-					Format(weaponAttribs, sizeof(weaponAttribs), "499 ; 2 ; 479 ; 0");
 				else /*if( iRobotVariant[iClient] == 0 )*/
 					Format(weaponAttribs, sizeof(weaponAttribs), "10 ; 2 ; 8 ; 5 ; 479 ; 0");
 				SpawnWeapon( iClient, "tf_weapon_medigun", 29, 100, 5, weaponAttribs, false );
@@ -3979,7 +4022,7 @@ public Action:WaveStart(Handle:event, const String:name[], bool:dontBroadcast)
 	///BOMB TELEPORT
 //	CreateTimer(3.0, Teleport_Bomb);//Prevent bug when a popfile change the intel
 
-	flLastSentryBuster = GetGameTime()+20.0;
+	flLastSentryBuster = 0.0;
 }
 public Action:Timer_SetBannerCharge( Handle:hTimer, client)
 {
@@ -4307,7 +4350,7 @@ public Action:OnSpawnStartTouch( iEntity, iOther )
 		return Plugin_Continue;
 	//if(!bInRespawn[iOther])
 	//{
-		//PrintToChatAll("enabled bool repsawn");
+	//PrintToChatAll("enabled bool repsawn");
 	bInRespawn[iOther] = true;
 	//}
 	return Plugin_Continue;
@@ -5218,7 +5261,7 @@ stock PickRandomPlayer( TFTeam:iTeam = TFTeam_Unassigned )
 				target_list[target_count++] = i;
 	return ( target_count ? target_list[GetRandomInt(0,target_count-1)] : 0 );
 }
-/*public Action:Timer_stripSentrybuster(Handle:timer, any:client)//fix for gatebot sentrybuster
+public Action:Timer_stripSentrybuster(Handle:timer, any:client)//fix for gatebot sentrybuster
 {
 	if(iRobotMode[client] == Robot_SentryBuster)
 	{
@@ -5227,13 +5270,13 @@ stock PickRandomPlayer( TFTeam:iTeam = TFTeam_Unassigned )
 		{
 			if(GetEntPropEnt(hat, Prop_Send, "m_hOwnerEntity") == client)
 			{																																																																																																																																																																																																																																																																																																												
-					AcceptEntityInput(hat, "Kill");
-					IsGateBotPlayer[client] = false;
+				AcceptEntityInput(hat, "Kill");
+				IsGateBotPlayer[client] = false;
 //				PrintToChatAll("Found hat");	
 			}
 		}
 	}
-}*/
+}
 stock PickRandomRobot( iClient, bool:bChangeClass = true )
 {
 	if( !IsMvM() || !IsValidRobot(iClient) )
@@ -5241,13 +5284,13 @@ stock PickRandomRobot( iClient, bool:bChangeClass = true )
 	//SetClassVariant( iClient, TFClass_DemoMan, SENTRYBUSTER_CLASSVARIANT );
 	//return;
 	
-	if(g_CanDispatchSentryBuster==true && iRobotMode[iClient] != Robot_SentryBuster && !IsFakeClient(iClient) && flLastSentryBuster + 35.0 < GetGameTime())// && GetRandomInt(1,5) > 4) //&& GetRandomInt(0,9) > 8 10%
+	if(g_CanDispatchSentryBuster==true && iRobotMode[iClient] != Robot_SentryBuster && !IsFakeClient(iClient) && flLastSentryBuster < GetGameTime())// && GetRandomInt(1,5) > 4) //&& GetRandomInt(0,9) > 8 10%
 	{
+		flLastSentryBuster = GetGameTime()+45.0;// delay to 45s
+		g_CanDispatchSentryBuster = false;
 		//PrintToChatAll("Sentry Buster dispatched.");
 		SetClassVariant( iClient, TFClass_DemoMan, SENTRYBUSTER_CLASSVARIANT );
 		//moved engineer speach code to on spawn
-		flLastSentryBuster = GetGameTime();
-		g_CanDispatchSentryBuster = false;
 		return;
 	}
 	
@@ -5604,7 +5647,7 @@ stock bool:SetClassVariant( iClient, TFClassType:iClass = TFClass_Unknown, iSVar
 	new GateBotCase = GetRandomInt(1,5);
 	if(GateBotCase == 5 && IsMannhattan && nGateCapture != 2 && iMode != Robot_SentryBuster)
 	{
-		//CreateTimer(0.3, Timer_stripSentrybuster, iClient);
+		CreateTimer(0.3, Timer_stripSentrybuster, iClient);
 		IsGateBotPlayer[iClient] = true;
 	}
 	else
@@ -7722,7 +7765,7 @@ public Action:Timer_SetNoUpgrade( Handle:hTimer, any:iEntity )
 }
 public TF2_OnWaitingForPlayersStart()
 {
-	//CreateExtraSpawnAreas();
+	CreateExtraSpawnAreas();
 	flNextChangeTeamBlu = GetGameTime() + 3.2;
 	if(nGateCapture != 0)
 		nGateCapture = 0;
@@ -7844,8 +7887,8 @@ stock SpawnFuncSpawnZone(infoplayerspawn)
 	GetEntPropVector(infoplayerspawn, Prop_Send, "m_vecOrigin", pos);
 	TeleportEntity(entindex, pos, NULL_VECTOR, NULL_VECTOR);
 	
-	SDKHook(entindex, SDKHook_StartTouch, OnSpawnStartTouch );
-	SDKHook(entindex, SDKHook_EndTouch, OnSpawnEndTouch );
+//	SDKHook(entindex, SDKHook_Touch, OnSpawnStartTouch );
+//	SDKHook(entindex, SDKHook_EndTouch, OnSpawnEndTouch );
 
 //	PrintToChatAll("Created the func_capzone");
 }
@@ -8177,4 +8220,29 @@ bool:ClientHasVoiceLines(client)
 	}
 	return false;
 
+}
+stock MyAddServerTag(const String:tag[])
+{	
+	//PrintToChatAll("att");
+	if (FindStringInArray(g_hCustomTags, tag) == -1)
+	{
+		PushArrayString(g_hCustomTags, tag);
+	}
+	decl String:current_tags[SVTAGSIZE];
+	GetConVarString(sv_tags, current_tags, sizeof(current_tags));
+	if (StrContains(current_tags, tag) > -1)
+	{
+		// already have tag
+		return;
+	}
+	
+	decl String:new_tags[SVTAGSIZE];
+	Format(new_tags, sizeof(new_tags), "%s%s%s", current_tags, (current_tags[0]!=0)?",":"", tag);
+	
+	new flags = GetConVarFlags(sv_tags);
+	SetConVarFlags(sv_tags, flags & ~FCVAR_NOTIFY);
+	g_bIgnoreNextTagChange = true;
+	SetConVarString(sv_tags, new_tags);
+	g_bIgnoreNextTagChange = false;
+	SetConVarFlags(sv_tags, flags);
 }
