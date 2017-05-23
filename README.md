@@ -8,5 +8,4 @@ TF2Attributes https://forums.alliedmods.net/showthread.php?t=210221
 
 TF2.randomizer gamedata 
 
-Optimal mvm_visiblemaxplayers (10) https://forums.alliedmods.net/showthread.php?t=210221
-
+Optimal mvm_visiblemaxplayers (10) https://forums.alliedmods.net/showpost.php?p=1819270
