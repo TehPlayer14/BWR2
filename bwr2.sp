@@ -17,7 +17,7 @@
 
 #pragma semicolon					1
 
-#define PLUGIN_VERSION				"BWR2 1.5.5"
+#define PLUGIN_VERSION				"BWR2 1.5.5a"
 #define PLUGIN_TAG					"BWR2"
 
 //#define PLUGIN_UPDATE_URL			""
@@ -615,14 +615,14 @@ public OnMapStart()
 			SDKHook( iEnt, SDKHook_Touch, OnFlagTouch );
 //			SDKHook( iEnt, SDKHook_EndTouch, OnFlagEndTouch );
 		}
-		iEnt = -1;
-		while( ( iEnt = FindEntityByClassname( iEnt, "func_respawnroom") ) != -1 )
-			if( GetEntProp( iEnt, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
-			{
-				SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
-				//SDKHook( iEnt, SDKHook_StartTouch, OnSpawnStartTouch );
-				SDKHook( iEnt, SDKHook_EndTouch, OnSpawnEndTouch );
-			}
+//		iEnt = -1;
+//		while( ( iEnt = FindEntityByClassname( iEnt, "func_respawnroom") ) != -1 )
+//			if( GetEntProp( iEnt, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
+//			{
+//				SDKHook( iEnt, SDKHook_Touch, OnSpawnStartTouch );
+//				//SDKHook( iEnt, SDKHook_StartTouch, OnSpawnStartTouch );
+//				SDKHook( iEnt, SDKHook_EndTouch, OnSpawnEndTouch );
+//			}
 		iEnt = -1;
 		while( ( iEnt = FindEntityByClassname( iEnt, "func_capturezone") ) != -1 )
 			if( GetEntProp( iEnt, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
@@ -1050,15 +1050,15 @@ public OnEntityCreated( iEntity, const String:strClassname[] )
 	}
 	else if( StrEqual( strClassname, "func_respawnroom", false ) )
 	{
-		if( GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
-		{
+		//if( GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) == _:TFTeam_Blue )
+		//{
 			//if(!IsSpawnedSpawnroom[iEntity])
 			//{
 			//SDKHook( iEntity, SDKHook_StartTouch, OnSpawnStartTouch );
 			SDKHook( iEntity, SDKHook_Touch, OnSpawnStartTouch );
 			SDKHook( iEntity, SDKHook_EndTouch, OnSpawnEndTouch );
 			//}
-		}
+		//}
 	}
 	else if( StrEqual( strClassname, "func_capturezone", false ) )
 	{
@@ -4346,7 +4346,7 @@ public Action:OnRoundStartPre( Handle:hEvent, const String:strEventName[], bool:
 
 public Action:OnSpawnStartTouch( iEntity, iOther )
 {
-	if( !IsMvM() || !IsValidRobot(iOther) || GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) != _:TFTeam_Blue )
+	if( !IsMvM() || !IsValidRobot(iOther) || GetEntProp( iEntity, Prop_Send, "m_iTeamNum" ) != _:TFTeam_Blue)
 		return Plugin_Continue;
 	//if(!bInRespawn[iOther])
 	//{
